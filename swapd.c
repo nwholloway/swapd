@@ -1,5 +1,5 @@
 /*
- * $Id$ 
+ * $Id: swapd.c,v 1.1 1995/02/12 11:38:29 alfie Exp alfie $ 
  *
  * swapd - dynamically add and remove swap
  *
@@ -67,7 +67,7 @@ void	ckconf ( char *argv0 )
 void	cleanup ()
 {
     while ( chunks ) {
-        delswap ( chunks-- );
+        delswap ( --chunks );
     }
 }
 
@@ -368,7 +368,7 @@ int addswap ( int i )
     memset ( page, 0xFF, ( pages + 7 ) / 8 );
     page [ 0 ] &= 0xFE;
     if ( pages % 8 )
-	page [ ( pages + 7 ) / 8 ] &= ( 0xFF >> pages % 8 );
+	page [ ( pages + 7 ) / 8 - 1 ] &= ( 0xFF >> ( 8 - ( pages % 8 ) ) );
 
     /* stick the pages for swapping onto disk */
     while ( pages-- > 0 ) {
