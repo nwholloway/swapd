@@ -1,5 +1,5 @@
-.\" $Id$
-.TH SWAPD 1 "12th February 95"
+.\" $Id: swapd.man,v 1.1 1995/02/12 11:38:32 alfie Exp alfie $
+.TH SWAPD 1 "21st May 1995"
 .SH NAME
 swapd \- add temporary swap as required
 .SH SYNOPSIS
@@ -72,6 +72,16 @@ number of swap files or partitions is limited by the kernel to 8.
 Values for the size of the swap file, and the upper and lower limits can
 be suffixed with the letters 'B', 'K', and 'M' to mean multiply by 512,
 1024, and 1048576 respectively.
+.SH BUGS
+Swapping from a file is
+.I much
+slower than swapping from a partition.
+.PP
+If there is a sudden increase in VM requirement,
+.B swapd
+may not get to run quickly enough to add the necessary swap.  This can be
+mitigated by having a large lower limit, and reducing the check interval,
+but can not be eliminated.
 .SH "SEE ALSO"
 .BR mkswap(8) ,
 .BR swapon(8) ,

@@ -1,5 +1,5 @@
 /*
- * $Id: swapd.c,v 1.2 1995/02/12 22:36:00 alfie Exp alfie $ 
+ * $Id: swapd.c,v 1.3 1995/02/21 21:31:13 alfie Exp $ 
  *
  * swapd - dynamically add and remove swap
  *
@@ -81,13 +81,9 @@ void	cleanup ()
  */
 void    sighandler ( int signal )
 {
-#ifdef DEBUG
     syslog ( LOG_INFO, "shutting down on signal %d...", signal );
-#endif
     cleanup ();
-#ifdef DEBUG
     syslog ( LOG_INFO, "...done" );
-#endif
     exit ( 1 );
 }
 
@@ -203,11 +199,9 @@ int     main ( int argc, char *argv[] )
 	    if ( upper <= 0 || *optarg != '\0' )
 		usage ( argv[0], "bad value for upper limit" );
 	    break;
-#ifdef DEBUG
 	case 'D':
 	    debug = 1;
 	    break;
-#endif
 	default:
 	    usage ( argv[0], "internal getopt foulup" );
 	    break;
@@ -277,7 +271,7 @@ int     main ( int argc, char *argv[] )
 
     for ( ; ; ) {
 	swap = getswap();
-#ifdef DEBUG
+#ifndef BROKEN_SYSLOG
 	syslog ( LOG_DEBUG, "%dk available swap", swap / 1024 );
 #endif
 	if ( swap < lower && chunks < numchunks ) {
@@ -406,9 +400,7 @@ int addswap ( int i )
 	return 0;
     }
 
-#ifdef DEBUG
     syslog ( LOG_INFO, "adding \"%s\" as swap", swapfile[i] );
-#endif
     if ( swapon ( swapfile[i] ) < 0 ) {
 	syslog ( LOG_ERR, "swapon failed on \"%s\": %m", swapfile[i] );
 	(void) unlink ( swapfile[i] );
@@ -431,8 +423,7 @@ int delswap ( int i )
         syslog ( LOG_ERR, "unlink of \"%s\" failed: %m", swapfile[i] );
     }
 
-#ifdef DEBUG
     syslog ( LOG_INFO, "removed \"%s\" as swap", swapfile[i] );
-#endif
+
     return 1;
 }

@@ -1,9 +1,9 @@
 /*
- * $Id: swapd.h,v 1.3 1995/02/12 22:38:17 alfie Exp alfie $
+ * $Id: swapd.h,v 1.4 1995/02/21 21:32:03 alfie Exp alfie $
  *
  */
 
-# define VERSION	"1.2"
+# define VERSION	"1.3"
 
 /* The directory in which the extra swap files will be created */
 # ifndef TMPDIR
@@ -22,7 +22,7 @@
 
 /* The interval (in seconds) between checks */
 # ifndef INTERVAL
-#  define INTERVAL	30
+#  define INTERVAL	15
 # endif
 
 /* The maximum number of extra swap files that will be created */
@@ -32,7 +32,7 @@
 
 /* The size of each extra swapfile */
 # ifndef CHUNKSZ
-#  define CHUNKSZ	2 * 1024 * 1024
+#  define CHUNKSZ	4 * 1024 * 1024
 # endif
 
 /* If the free swap falls below this level, an extra swap file is added */
