@@ -1,9 +1,9 @@
 /*
- * $Id: swapd.h,v 1.1 1995/02/12 11:38:30 alfie Exp alfie $
+ * $Id: swapd.h,v 1.2 1995/02/12 22:36:00 alfie Exp alfie $
  *
  */
 
-# define VERSION	"1.0"
+# define VERSION	"1.1"
 
 /* The directory in which the extra swap files will be created */
 # ifndef TMPDIR
