@@ -1,6 +1,6 @@
 /*
- * $Id$
- * $Log$
+ * $Id: swapd.h,v 1.1 1995/02/12 11:38:30 alfie Exp alfie $
+ *
  */
 
 # define VERSION	"1.0"
