@@ -1,0 +1,34 @@
+$Id$
+
+This is a program that I'm not convinced of the utility of, but
+occasionally there are calls for such a tool.  But, despite that, here
+it is...
+
+Swapd will allow free space in the filesystem to be used as swap when
+needed by adding additional swap files as needed.
+
+Swapd periodically monitors the amount of free swap available in
+the system.  It tries to maintain the amount of swap using upper and
+lower limits.  If the amount of free swap falls below the lower limit,
+it will add an extra swapfile.  A swap file will be removed if it will
+still leave the system with at least the upper limit available.
+
+Since swapping from a file is less efficient than swapping from a
+partition, this can be used to `top up' the swap when needed (but will
+also work as the sole source of swap).
+
+The original code was written in April 1993, and has been sitting on my
+disk awaiting the extra code needed (more parameters, signal handling,
+and checking of parameters).  It was actually started when I discovered
+that I had failed to compile xv due to being short of 1M of swap (after
+having 8+8Mb VM).
+
+All of the parameters can either be changed at compile time, or at
+run time from the command line.  The current defaults are arbitary --
+if you find better settings, let me know.
+
+	Nick Holloway <Nick.Holloway@alfie.demon.co.uk>, April 1994.
+
+Following the same discussion coming up again, some comments were added
+to the code and the manual page updated.
+							February 1995

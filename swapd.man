@@ -1,0 +1,80 @@
+.\" $Id$
+.TH SWAPD 1 "12th February 95"
+.SH NAME
+swapd \- add temporary swap as required
+.SH SYNOPSIS
+.B swapd -h
+.br
+.B swapd -v
+.br
+.B swapd 
+[
+.BI \-d " "dir
+] [
+.BI \-i " "interval
+] [
+.BI \-n " "num
+] [
+.BI \-s " "size
+] [
+.BI \-l " "lower
+] [
+.BI \-u " "upper
+]
+.SH DESCRIPTION
+.B Swapd
+periodically monitors the amount of free swap available in
+the system.  It tries to maintain the amount of swap using upper and
+lower limits.  If the amount of free swap falls below the lower limit,
+it will add an extra swapfile.  A swap file will be removed if it will
+still leave the system with at least the upper limit available.
+.PP
+Since swapping from a file is less efficient than swapping from a
+partition, this can be used to `top up' the swap when needed (but will
+also work as the sole source of swap).
+.SH OPTIONS
+.TP
+.B \-h
+Print the help summary and exit.
+.TP
+.B \-v
+Print the version number and exit.
+.TP
+.BI \-p " "prio
+This is the priority at which the process is run.  Remember that an increased
+priority is chosen with a larger negative number.  This defaults to -4.
+.TP
+.BI \-d " "dir
+This is the directory in which the swap files are created.  This must be a
+directory, and not a symlink to the directory.  This defaults to /var/tmp.
+.TP
+.BI \-i " "interval
+This is the interval between checks on the state of the swap.  This
+defaults to 30 seconds.
+.TP
+.BI \-s " "size
+This is the size of the swap file to create.  The actual additional swap
+will be one page (4K) less due to header in swap file.  The largest value
+for a swap file is 127.6875M.
+.TP
+.BI \-l " "lower
+When the free swap falls below this amount, an additional swap file will
+be added.
+.TP
+.BI \-u " "upper
+When removing a swap file would leave this amount of swap free, the swap
+file is removed.  This must be larger than the lower limit.
+.TP
+.BI \-n " "num
+This is the maximum number of swap files to create.  Currently the total
+number of swap files or partitions is limited by the kernel to 8.
+.PP
+Values for the size of the swap file, and the upper and lower limits can
+be suffixed with the letters 'B', 'K', and 'M' to mean multiply by 512,
+1024, and 1048576 respectively.
+.SH "SEE ALSO"
+.BR mkswap(8) ,
+.BR swapon(8) ,
+.BR swapoff(8) .
+.SH AUTHOR
+Nick Holloway \fC<Nick.Holloway@alfie.demon.co.uk>\fP
