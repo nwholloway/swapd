@@ -1,4 +1,4 @@
-.\" $Id: swapd.man,v 1.1 1995/02/12 11:38:32 alfie Exp alfie $
+.\" $Id: swapd.man,v 1.2 1995/05/21 20:28:47 alfie Exp alfie $
 .TH SWAPD 1 "21st May 1995"
 .SH NAME
 swapd \- add temporary swap as required
@@ -42,7 +42,8 @@ Print the version number and exit.
 .TP
 .BI \-p " "prio
 This is the priority at which the process is run.  Remember that an increased
-priority is chosen with a larger negative number.  This defaults to -4.
+priority is chosen with a larger negative number.  This defaults to -4.  If
+a positive value is chosen, the process is run with real time scheduling.
 .TP
 .BI \-d " "dir
 This is the directory in which the swap files are created.  This must be a
@@ -50,12 +51,12 @@ directory, and not a symlink to the directory.  This defaults to /var/tmp.
 .TP
 .BI \-i " "interval
 This is the interval between checks on the state of the swap.  This
-defaults to 30 seconds.
+defaults to 1 second.
 .TP
 .BI \-s " "size
 This is the size of the swap file to create.  The actual additional swap
-will be one page (4K) less due to header in swap file.  The largest value
-for a swap file is 127.6875M.
+will be one page less due to the header in swap file.  The largest value
+for a swap file on a machine with a 4K page size (Linux/x86) is 127.6875M.
 .TP
 .BI \-l " "lower
 When the free swap falls below this amount, an additional swap file will
@@ -85,6 +86,7 @@ but can not be eliminated.
 .SH "SEE ALSO"
 .BR mkswap(8) ,
 .BR swapon(8) ,
-.BR swapoff(8) .
+.BR swapoff(8) ,
+.BR sched_setscheduler(2) .
 .SH AUTHOR
 Nick Holloway \fC<Nick.Holloway@alfie.demon.co.uk>\fP
