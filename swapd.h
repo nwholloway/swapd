@@ -1,9 +1,9 @@
 /*
- * $Id: swapd.h,v 1.4 1995/02/21 21:32:03 alfie Exp alfie $
+ * $Id: swapd.h,v 1.5 1995/05/21 20:27:53 alfie Exp alfie $
  *
  */
 
-# define VERSION	"1.3"
+# define VERSION	"1.4"
 
 /* The directory in which the extra swap files will be created */
 # ifndef TMPDIR
@@ -22,7 +22,7 @@
 
 /* The interval (in seconds) between checks */
 # ifndef INTERVAL
-#  define INTERVAL	15
+#  define INTERVAL	1
 # endif
 
 /* The maximum number of extra swap files that will be created */

@@ -1,4 +1,4 @@
-$Id: README,v 1.1 1995/02/12 11:38:27 alfie Exp alfie $
+$Id: README,v 1.2 1995/05/21 20:26:57 alfie Exp alfie $
 
 Every so often, there is an outcry about the Linux kernel, which goes
 something like:
@@ -57,12 +57,32 @@ The history of swapd is as follows:
     was made.  This was taken up by more people, and feedback was
     received.
 
-  * Since it was found useful, and the code seems stable (and bugs fixed)
-    I am now making the public release.
+  * May 1995, since it was found useful, and the code seemed stable
+    (and bugs fixed) it made it first public release.
+
+  * April 1996, updated to deal with the new Linux /proc/meminfo format,
+    and some small tweaks.
+
+  * December 1996, fixed lack of handling for '-p' and added support
+    for enabling real time scheduling (Andreas Kostyrka).
+
+  * August 1998, changes for compilation under glibc.
 
 Thanks to Tim Norman, Jim Nance, and David Groves (and possibly others
 I have forgotten) for their encourangement and testing.
 
-	Nick Holloway
-	    <Nick.Holloway@alfie.demon.co.uk>
-	    <Nick.Holloway@parallax.co.uk>
+Thanks to Marc Merlin who submitted patches for using the new
+/proc/meminfo layout, which shamed me into finishing off my own almost
+completed patch.
+
+More recently, thanks to Andreas Kostyrka for his submitted patches.  If
+you are interested, he has an X11 configuration tool, ...
+
+Since I have absolutely no idea who actually is using swapd, please tell
+me if you are.
+
+I am releasing swapd under the Gnu Public Licence (GPL).  See COPYING
+for details.
+
+    Nick Holloway
+	<Nick.Holloway@alfie.demon.co.uk>  http://www.alfie.demon.co.uk/
