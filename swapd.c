@@ -1,5 +1,5 @@
 /*
- * $Id: swapd.c,v 1.3 1995/02/21 21:31:13 alfie Exp $ 
+ * $Id: swapd.c,v 1.4 1995/05/21 20:29:53 alfie Exp alfie $ 
  *
  * swapd - dynamically add and remove swap
  *
@@ -7,6 +7,7 @@
  */ 
 
 # include <stdio.h>
+# include <string.h>
 # include <syslog.h>
 # include <unistd.h>
 # include <stdlib.h>
@@ -18,7 +19,9 @@
 # include <sys/file.h>
 # include <sys/vfs.h>
 # include <sys/resource.h>
-# include <linux/mm.h>
+# include <sys/swap.h>
+# include <sys/user.h>
+# include <sched.h>
 
 # include "swapd.h"
 
@@ -30,11 +33,6 @@ int     upper     = UPPER;      /* -u */
 int     interval  = INTERVAL;   /* -i */
 char   *tmpdir    = TMPDIR;     /* -d */
 
-/*
- * The intention was that `debug' would control the amount of logging that
- * occurred.  However, setlogmask is currently broke (fixed in future
- * release of libc).  So, if you want the extra logging, define DEBUG.
- */
 int	debug	= 0;		/* -D */
 
 char  **swapfile;		/* the names of swap files created */
@@ -151,7 +149,7 @@ int     main ( int argc, char *argv[] )
     struct  sigaction act;
     int     i;
 
-    while ( ( i = getopt ( argc, argv, "vhd:i:l:n:s:u:D" ) ) != -1 ) {
+    while ( ( i = getopt ( argc, argv, "vhp:d:i:l:n:s:u:D" ) ) != -1 ) {
 	switch ( i ) {
 	case '?':
 	    usage ( argv[0], "unknown flag, use -h for help" );
@@ -223,10 +221,21 @@ int     main ( int argc, char *argv[] )
     (void) umask ( 0077 );
 
     /* want to run at higher priority so get a chance to add swap space */
-    if ( setpriority ( PRIO_PROCESS, getpid (), priority ) < 0 ) {
-	(void) fprintf ( stderr, "%s: setpriority: %s\n", argv[0],
-		strerror ( errno ) );
-	exit ( 1 );
+    if ( priority <= 0 ) {
+	if ( setpriority ( PRIO_PROCESS, getpid (), priority ) < 0 ) {
+	    (void) fprintf ( stderr, "%s: setpriority: %s\n", argv[0],
+		    strerror ( errno ) );
+	    exit ( 1 );
+	}
+    } else {
+	struct sched_param s;
+	s.sched_priority = priority;
+	if ( sched_setscheduler( 0, SCHED_RR, &s ) < 0 )
+	{
+	    (void) fprintf( stderr, "%s: sched_setschedular: %s",
+			argv[0], strerror( errno ) );
+	    exit( 1 );
+	}
     }
 
     if ( ! debug ) {
@@ -245,7 +254,7 @@ int     main ( int argc, char *argv[] )
     }
 
     openlog ( "swapd", LOG_DAEMON | LOG_CONS | (debug ? LOG_PERROR : 0), 0 );
-    setlogmask ( debug ? LOG_UPTO ( LOG_DEBUG ) : LOG_UPTO ( LOG_NOTICE ) );
+    setlogmask ( debug ? LOG_UPTO ( LOG_DEBUG ) : LOG_UPTO ( LOG_WARNING ) );
 
     /* allocate memory needed at start, rather than leaving to later */
     swapfile = malloc ( sizeof(char*) * numchunks );
@@ -271,9 +280,7 @@ int     main ( int argc, char *argv[] )
 
     for ( ; ; ) {
 	swap = getswap();
-#ifndef BROKEN_SYSLOG
 	syslog ( LOG_DEBUG, "%dk available swap", swap / 1024 );
-#endif
 	if ( swap < lower && chunks < numchunks ) {
 	    if ( addswap ( chunks ) )
 		chunks++;
@@ -288,16 +295,29 @@ int     main ( int argc, char *argv[] )
 /*
  * Return the current amount of swap available.
  * This is the sum of free and shared.  It is got by parsing /proc/meminfo
+ * Linux 1.2:
  *             total:   used:    free:   shared:  buffers:
  *     Mem:   7417856  5074944  2342912   880640  3563520
  *     Swap:  8441856        0  8441856
+ *
+ * Linux 1.3:
+ *             total:    used:    free:  shared: buffers:  cached:
+ *     Mem:   7069696  6782976   286720  3633152   753664  2564096
+ *     Swap: 16801792   962560 15839232
+ *     MemTotal:      6904 kB
+ *     MemFree:        280 kB
+ *     MemShared:     3548 kB
+ *     Buffers:        736 kB
+ *     Cached:        2504 kB
+ *     SwapTotal:    16408 kB
+ *     SwapFree:     15468 kB
  */
 long getswap ()
 {
     static  int     fd	= -1;		/* fd to read meminfo from */
-    char    buffer [ 512 ];		/* enough to slurp meminfo in */
+    static  char    buffer [ 1024 ];	/* enough to slurp meminfo into */
     char   *cp;
-    long    freemem, cache, freeswap;
+    long    memfree, buffers, cached, swapfree;
     int     n;
 
     if ( fd < 0 ) {
@@ -317,25 +337,70 @@ long getswap ()
 	exit ( 1 );
     }
     buffer[n] = '\0';				/* null terminate */
+
+    memfree = -1;
+    buffers = 0;
+    cached  = 0;
+    swapfree = 0;
+
     cp = buffer;
-    while ( *cp != '\n' )		/* skip to memory usage line */
-	cp++;
-    while ( *cp != ' ' )		/* skip past 'Mem:' */
-	cp++;
-    if ( 2 != sscanf ( cp, "%*d %*d %ld %*d %ld", &freemem, &cache ) ) {
-	syslog ( LOG_ERR, "sscanf failed on memory info" );
-	exit ( 1 );
+    while ( cp )
+    {
+	if ( strncmp( cp, "MemFree:", 8 ) == 0 )
+	{
+	    memfree = atol( cp+9 ) * 1024;
+	    printf( "MemFree: %ld\n", memfree );
+	}
+	else if ( strncmp( cp, "Buffers:", 8 ) == 0 )
+	{
+	    buffers = atol( cp+9 ) * 1024;
+	    printf( "Buffers: %ld\n", buffers );
+	}
+	else if ( strncmp( cp, "Cached:", 7 ) == 0 )
+	{
+	    cached = atol( cp+8 ) * 1024;
+	    printf( "Cached: %ld\n", cached );
+	}
+	else if ( strncmp( cp, "SwapFree:", 9 ) == 0 )
+	{
+	    swapfree = atol( cp+10 ) * 1024;
+	    printf( "SwapFree: %ld\n", swapfree );
+	}
+#if 0 	/* Linux 1.2 compatability */
+	else if ( strncmp( cp, "Mem:", 4 ) == 0 )
+	{
+	    if ( 2 != sscanf ( cp+5, "%*d %*d %ld %*d %ld", &memfree, &buffers ) ) {
+		syslog ( LOG_ERR, "sscanf failed on memory info" );
+		exit ( 1 );
+	    }
+	    printf( "Mem: %ld %ld\n", memfree, buffers );
+	}
+	else if ( strncmp( cp, "Swap:", 5 ) == 0 )
+	{
+	    if ( 1 != sscanf ( cp+6, "%*d %*d %ld\n", &swapfree ) ) {
+		syslog ( LOG_ERR, "sscanf failed on swap info" );
+		exit ( 1 );
+	    }
+	    printf( "Swap: %ld\n", swapfree );
+	}
+#endif
+
+	/* move onto next line */
+	cp = strchr( cp, '\n' );
+	if ( cp )
+	{
+	    cp++;
+	}
     }
-    while ( *cp != '\n' )		/* skip to swap usage line */
-	cp++;
-    while ( *cp != ' ' )		/* skip past 'Swap:' */
-	cp++;
-    if ( 1 != sscanf ( cp, "%*d %*d %ld", &freeswap ) ) {
-	syslog ( LOG_ERR, "sscanf failed on swap info" );
+
+    /* If we haven't enabled 1.2 compatability on a 1.2 machine */
+    if ( memfree < 0 )
+    {
+	syslog ( LOG_ERR, "error parsing old format \"/proc/meminfo\"" );
 	exit ( 1 );
     }
 
-    return ( freemem + cache + freeswap );
+    return ( memfree + swapfree + ( buffers + cached ) / 2 );
 }
 
 /*
@@ -356,7 +421,7 @@ int addswap ( int i )
         exit ( 1 );
     }
     if ( fsstat.f_bsize * fsstat.f_bavail < chunksz ) {
-        syslog ( LOG_NOTICE, "no space for swapfile on \"%s\"", tmpdir );
+        syslog ( LOG_WARNING, "no space for swapfile on \"%s\"", tmpdir );
 	return 0;
     }
 
@@ -380,7 +445,7 @@ int addswap ( int i )
     /* stick the pages for swapping onto disk */
     while ( pages-- > 0 ) {
         if ( write ( fd, page, sizeof(page) ) != sizeof(page) ) {
-	    syslog ( LOG_NOTICE, "write failed on \"%s\": %m", swapfile[i] );
+	    syslog ( LOG_WARNING, "write failed on \"%s\": %m", swapfile[i] );
 	    (void) close ( fd );
 	    (void) unlink ( swapfile[i] );
 	    return 0;
@@ -401,7 +466,7 @@ int addswap ( int i )
     }
 
     syslog ( LOG_INFO, "adding \"%s\" as swap", swapfile[i] );
-    if ( swapon ( swapfile[i] ) < 0 ) {
+    if ( swapon ( swapfile[i], 0 ) < 0 ) {
 	syslog ( LOG_ERR, "swapon failed on \"%s\": %m", swapfile[i] );
 	(void) unlink ( swapfile[i] );
 	return 0;
