@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 1995/02/12 11:38:05 alfie Exp alfie $
+# $Id: Makefile,v 1.2 1995/02/12 22:36:00 alfie Exp alfie $
 
 BINDIR=/usr/sbin
 MANDIR=/usr/man
@@ -22,13 +22,10 @@ swapd.o: swapd.c swapd.h
 
 install: swapd swapd.man
 	install -s -m 0755 swapd $(BINDIR)
-	install -c -m 0644 swapd.man $(MANDIR)/man.$(MANEXT)/swapd.$(MANEXT)
+	install -c -m 0644 swapd.man $(MANDIR)/man$(MANEXT)/swapd.$(MANEXT)
 
 clobber: clean
 	rm -f swapd swapd.tar.gz
 
 clean:
 	rm -f *.o core
-
-tar:
-	GZIP=-9v tar zcvf swapd.tar.gz README Makefile swapd.h swapd.c swapd.man
